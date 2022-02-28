@@ -1,0 +1,1 @@
+# deko.moe-url-shortener
