@@ -1,3 +1,7 @@
+<?php
+	require("locale.php");
+?>
+
 <!doctype html>
 <html lang="en">
 	<head>
@@ -46,7 +50,6 @@
 								this.urlCode = res.data.code
 								this.show = true
 								this.error = false
-								console.log(res.data.code)
 							} else if(res.data.error) {
 								this.error = true
 								this.show = false
@@ -75,14 +78,14 @@
 							<form v-on:submit.prevent="addURL">
 								<div class="mb-3">
 									<label for="urlInput" class="form-label">URL</label>
-									<input type="url" v-model="urlForm.urlInput" class="form-control" name="urlInput" id="urlInput" aria-describedby="urlHelp">
-									<div id="urlHelp" class="form-text text-white">Enter a URL to be shortened</div>
+									<input type="url" v-model="urlForm.urlInput" class="form-control" name="urlInput" id="urlInput" aria-describedby="urlHelp" required>
+									<div id="urlHelp" class="form-text text-white"><?php echo $translator->translate('enterURL'); ?></div>
 								</div>
 								<div class="mb-3 form-check">
 									<input type="checkbox" v-model="urlForm.safetyPage" class="form-check-input" name="safetyPage" id="safetyPage">
-									<label class="form-check-label" for="safetyPage">Enable safety page</label>
+									<label class="form-check-label" for="safetyPage"><?php echo $translator->translate('safetyPage'); ?></label>
 								</div>
-								<button type="submit" class="btn btn-primary">Submit</button>
+								<button type="submit" class="btn btn-primary"><?php echo $translator->translate('submit'); ?></button>
 								<br><br>
 								<p v-if="show">Short url:</p><p v-if="show">https://l.deko.moe/go/{{ urlCode }}</p>
 								<p v-if="error" class="text-danger">{{ errorMessage }}</p>
