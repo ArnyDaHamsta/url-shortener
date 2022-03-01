@@ -1,7 +1,9 @@
 <?php
 	require dirname(__DIR__, 1) . '/vendor/autoload.php';
+	require("locale.php");
 	$dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__, 1));
 	$dotenv->load();
+
 	$conn = new mysqli($_ENV["MYSQL_HOST"], $_ENV["MYSQL_USERNAME"], $_ENV["MYSQL_PASSWORD"], $_ENV["MYSQL_DB"]);
 	if ($conn->connect_error) {
 		die("Connection failed: " . $conn->connect_error);
@@ -82,6 +84,7 @@
 
 		public function addUrl($url, $safe) {
 			global $conn;
+			global $translator;
 
 			$randomString = $this->generateShort();
 			$ip = $this->getUserIP();
@@ -93,7 +96,7 @@
 			}
 
 			if($this->checkCooldown($ip)){
-				return ["error", "Please wait 5 seconds"];
+				return ["error", $translator->translate('pleaseWait')];
 			}
 
 			$stmt = $conn->prepare("INSERT INTO url (url, short, safe, ip) VALUES (?, ?, ?, ?)");
