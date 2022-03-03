@@ -95,6 +95,10 @@
 				$safe = 0;
 			}
 
+			if(!filter_var($url, FILTER_VALIDATE_URL)){
+				return ["error", $translator->translate('invalidURL')];
+			}
+
 			if($this->checkCooldown($ip)){
 				return ["error", $translator->translate('pleaseWait')];
 			}
