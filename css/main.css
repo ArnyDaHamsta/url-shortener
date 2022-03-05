@@ -22,3 +22,8 @@ body {
 /*.grecaptcha-badge {
 	visibility: hidden !important;
 }*/
+
+.btnLatest:focus {
+	outline: none;
+	box-shadow: none;
+  }

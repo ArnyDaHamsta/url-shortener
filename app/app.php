@@ -28,19 +28,28 @@
 		<title>dekomori desu - url shortener</title>
 	</head>
 	<script type="module">
+		import LatestItems from '../js/latest.js'
+
 		Vue.createApp({
-			data: () => ({
-				urlForm: {
-					urlInput: "",
-					safetyPage: false
-				},
-				latestURL: [],
-				show: false,
-				urlCode: "",
-				error: false,
-				errorMessage: "An error occured",
-				latestVisible: false
-			}),
+			components: {
+				LatestItems
+			},
+			data() {
+				return {
+					urlForm: {
+						urlInput: "",
+						safetyPage: false
+					},
+					searchQuery: '',
+					gridColumns: ['id', 'url', 'short', 'date'],
+					gridData: [],
+					show: false,
+					urlCode: "",
+					error: false,
+					errorMessage: "An error occured",
+					latestVisible: false
+				}
+			},
 			methods: {
 				addURL(e) {
 					axios.post("app/submit.php", this.urlForm)
@@ -50,6 +59,7 @@
 								this.urlCode = res.data.code
 								this.show = true
 								this.error = false
+								this.callURLS()
 							} else if(res.data.error) {
 								this.error = true
 								this.show = false
@@ -65,6 +75,21 @@
 							this.urlForm.urlInput = ""
 							this.urlForm.safetyPage = false
 						})
+				},
+				callURLS() {
+					axios.post("app/get.php")
+						.then((res) => {
+							console.log(res)
+							if(res.data){
+								this.gridData = res.data
+							}
+						})
+						.catch((error) => {
+						}).finally(() => {})
+				},
+				getURLS() {
+					this.latestVisible = !this.latestVisible
+					this.callURLS()
 				}
 			}
 		}).mount('#app')
@@ -90,7 +115,7 @@
 									<br><br>
 									<p v-if="show">Short url:</p><p v-if="show">https://l.deko.moe/go/{{ urlCode }}</p>
 									<p v-if="error" class="text-danger">{{ errorMessage }}</p>
-									<!-- <button type="button" @click="latestVisible = !latestVisible" class="btn btnLatest" style="text-decoration: none; color: white;">Toggle latest</button><br> -->
+									<button type="button" @click="getURLS()" class="btn btnLatest" style="text-decoration: none; color: white;">Toggle latest</button><br>
 									<a href="https://deko.moe" class="card-link" style="text-decoration: none; color: white;">Main page</a>
 								</form>
 							</div>
@@ -98,26 +123,11 @@
 						<div v-if="latestVisible" class="card text-center" style="width: 50rem;">
 							<div class="card-body text-white">
 								<h5 class="card-title">Your latest links</h5>
-								<table class="table table-light mb-0">
-									<thead>
-										<th scope="col">#</th>
-										<th scope="col">URL</th>
-										<th scope="col">Short URL</th>
-										<th scope="col">Time</th>
-									</thead>
-									<tbody>
-										<div v-if="latestURL">
-											<div v-for="latest in latestURL">
-												<tr>
-													<th scope="col">{{ latest.id }}</th>
-													<td>{{ latest.url }}</td>
-													<td>{{ latest.short }}</td>
-													<td>{{ latest.time }}</td>
-												</tr>
-											</div>
-										</div>
-									</tbody>
-								</table>
+								<latest-items
+									:data="gridData"
+									:columns="gridColumns"
+									:filter-key="searchQuery">
+								</latest-items>
 							</div>
 						</div>
 					</div>

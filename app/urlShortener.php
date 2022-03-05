@@ -27,6 +27,29 @@
 			}
 		}
 
+		public function getAllURLSFromIP() {
+			global $conn;
+			$urls = array();
+			$response = array();
+
+			$sql = "SELECT * FROM url WHERE ip = '" . $conn->real_escape_string($this->getUserIP()) . "' ORDER BY id DESC LIMIT 5";
+			$result = $conn->query($sql);
+			if ($result->num_rows > 0) {
+				while($row = $result->fetch_assoc()) {
+					$id = $row["id"];
+					$url = $row["url"];
+					$short = $row["short"];
+					$date = $row["date"];
+					$responseArray = array("id" => $id, "url" => $url, "short" => $short, "date" => $date);
+					array_push($urls, $responseArray);
+				}
+				$response = json_encode($urls);
+				return $response;
+			} else {
+				return false;
+			}
+		}
+
 		protected function generateShort($length = 8) {
 			$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 			$charactersLength = strlen($characters);
@@ -104,7 +127,7 @@
 			}
 
 			$stmt = $conn->prepare("INSERT INTO url (url, short, safe, ip) VALUES (?, ?, ?, ?)");
-			$stmt->bind_param("ssis", $conn->real_escape_string($url), $randomString, $safe, $ip);
+			$stmt->bind_param("ssis", $conn->real_escape_string($url), $randomString, $conn->real_escape_string($safe), $conn->real_escape_string($ip));
 			$stmt->execute();
 			$stmt->close();
 			$conn->close();
