@@ -28,17 +28,26 @@
 		<title>dekomori desu - url shortener</title>
 	</head>
 	<script type="module">
+		import LatestItems from '../js/latest.js'
+
 		Vue.createApp({
+			components: {
+				LatestItems
+			},
 			data() {
 				return {
 					urlForm: {
 						urlInput: "",
 						safetyPage: false
 					},
+					searchQuery: '',
+					gridColumns: ['id', 'url', 'short', 'date'],
+					gridData: [],
 					show: false,
 					urlCode: "",
 					error: false,
-					errorMessage: "An error occured"
+					errorMessage: "An error occured",
+					latestVisible: false
 				}
 			},
 			methods: {
@@ -50,6 +59,7 @@
 								this.urlCode = res.data.code
 								this.show = true
 								this.error = false
+								this.callURLS()
 							} else if(res.data.error) {
 								this.error = true
 								this.show = false
@@ -65,6 +75,21 @@
 							this.urlForm.urlInput = ""
 							this.urlForm.safetyPage = false
 						})
+				},
+				callURLS() {
+					axios.post("app/get.php")
+						.then((res) => {
+							console.log(res)
+							if(res.data){
+								this.gridData = res.data
+							}
+						})
+						.catch((error) => {
+						}).finally(() => {})
+				},
+				getURLS() {
+					this.latestVisible = !this.latestVisible
+					this.callURLS()
 				}
 			}
 		}).mount('#app')
@@ -73,24 +98,37 @@
 		<div id="app">
 			<div class="container">
 				<div class="d-flex justify-content-center align-items-center vh-100">
-					<div class="card text-center" style="width: 20rem;">
-						<div class="card-body text-white">
-							<form v-on:submit.prevent="addURL">
-								<div class="mb-3">
-									<label for="urlInput" class="form-label">URL</label>
-									<input type="url" v-model="urlForm.urlInput" class="form-control" name="urlInput" id="urlInput" aria-describedby="urlHelp" required>
-									<div id="urlHelp" class="form-text text-white"><?php echo $translator->translate('enterURL'); ?></div>
-								</div>
-								<div class="mb-3 form-check">
-									<input type="checkbox" v-model="urlForm.safetyPage" class="form-check-input" name="safetyPage" id="safetyPage">
-									<label class="form-check-label" for="safetyPage"><?php echo $translator->translate('safetyPage'); ?></label>
-								</div>
-								<button type="submit" class="btn btn-primary"><?php echo $translator->translate('submit'); ?></button>
-								<br><br>
-								<p v-if="show">Short url:</p><p v-if="show">https://l.deko.moe/go/{{ urlCode }}</p>
-								<p v-if="error" class="text-danger">{{ errorMessage }}</p>
-								<a href="https://deko.moe" class="card-link" style="text-decoration: none; color: white;">Main page</a>
-							</form>
+					<div class="row">
+						<div class="card text-center" style="width: 20rem;">
+							<div class="card-body text-white">
+								<form v-on:submit.prevent="addURL">
+									<div class="mb-3">
+										<h5 class="card-title" for="urlInput" class="form-label">URL</h5>
+										<input type="url" v-model="urlForm.urlInput" class="form-control" name="urlInput" id="urlInput" aria-describedby="urlHelp" required>
+										<div id="urlHelp" class="form-text text-white"><?php echo $translator->translate('enterURL'); ?></div>
+									</div>
+									<div class="mb-3 form-check">
+										<input type="checkbox" v-model="urlForm.safetyPage" class="form-check-input" name="safetyPage" id="safetyPage">
+										<label class="form-check-label" for="safetyPage"><?php echo $translator->translate('safetyPage'); ?></label>
+									</div>
+									<button type="submit" class="btn btn-primary"><?php echo $translator->translate('submit'); ?></button>
+									<br><br>
+									<p v-if="show">Short url:</p><p v-if="show">https://l.deko.moe/go/{{ urlCode }}</p>
+									<p v-if="error" class="text-danger">{{ errorMessage }}</p>
+									<button type="button" @click="getURLS()" class="btn btnLatest" style="text-decoration: none; color: white;">Toggle latest</button><br>
+									<a href="https://deko.moe" class="card-link" style="text-decoration: none; color: white;">Main page</a>
+								</form>
+							</div>
+						</div>
+						<div v-if="latestVisible" class="card text-center" style="width: 50rem;">
+							<div class="card-body text-white">
+								<h5 class="card-title">Your latest links</h5>
+								<latest-items
+									:data="gridData"
+									:columns="gridColumns"
+									:filter-key="searchQuery">
+								</latest-items>
+							</div>
 						</div>
 					</div>
 				</div>

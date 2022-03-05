@@ -9,6 +9,7 @@
 		'errorOccured' => 'An error occured',
 		'pleaseWait' => 'Please wait 5 seconds',
 		'noURL' => 'You didn\'t provide a URL',
-		'couldnotShorten', 'URL could not be shortened'
+		'couldnotShorten' => 'URL could not be shortened',
+		'invalidURL' => 'This is not a valid URL'
 	];
 ?>
