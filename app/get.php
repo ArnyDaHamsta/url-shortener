@@ -2,5 +2,5 @@
 	require("urlShortener.php");
 	$app = new urlShortener();
 
-	echo $app->getAllURLSFromIP();
+	echo $app->getAllURLSFromIP(true);
 ?>

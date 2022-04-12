@@ -12,8 +12,16 @@
 		header("Location: https://l.deko.moe");
 	});
 
+	$router->get('/view', function() {
+		header("Location: https://l.deko.moe");
+	});
+
 	$router->get('/go/{id}', function($id) {
 		include("app/redirect.php");
+	});
+
+	$router->get('/view/{id}', function($id) {
+		include("app/view.php");
 	});
 
 	$router->run();

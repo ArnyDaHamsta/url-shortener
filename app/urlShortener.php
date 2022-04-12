@@ -1,6 +1,7 @@
 <?php
 	require dirname(__DIR__, 1) . '/vendor/autoload.php';
 	require("locale.php");
+
 	$dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__, 1));
 	$dotenv->load();
 
@@ -27,7 +28,7 @@
 			}
 		}
 
-		public function getAllURLSFromIP() {
+		public function getAllURLSFromIP($truncate = false) {
 			global $conn;
 			$urls = array();
 			$response = array();
@@ -40,6 +41,10 @@
 					$url = $row["url"];
 					$short = $row["short"];
 					$date = $row["date"];
+					if($truncate){
+						$truncated = (strlen($url) > 50) ? substr($url, 0, 50) . '...' : $url;
+						$url = $truncated;
+					}
 					$responseArray = array("id" => $id, "url" => $url, "short" => $short, "date" => $date);
 					array_push($urls, $responseArray);
 				}
@@ -103,6 +108,19 @@
 			} else {
 				return false;
 			}
+		}
+
+		public function redirectToURL($short) {
+			global $conn;
+
+			$ip = $this->getUserIP();
+			$userAgent = $_SERVER['HTTP_USER_AGENT'];
+
+			$stmt = $conn->prepare("INSERT INTO url_stats (short, ip, browser) VALUES (?, ?, ?)");
+			$stmt->bind_param("sss", $conn->real_escape_string($short), $conn->real_escape_string($ip), $userAgent);
+			$stmt->execute();
+			$stmt->close();
+			$conn->close();
 		}
 
 		public function addUrl($url, $safe) {

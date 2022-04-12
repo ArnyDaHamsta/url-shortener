@@ -4,7 +4,7 @@
 		<!-- Required meta tags -->
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<link rel="icon" type="image/x-icon" href="favicon.ico">
+		<link rel="icon" type="image/x-icon" href="../favicon.ico">
 
 		<meta content="dekomori desu - url shortener" property="og:title" />
 		<meta content="https://deko.moe" property="og:url" />
@@ -27,25 +27,15 @@
 				<div class="d-flex justify-content-center align-items-center vh-100">
 					<div class="card text-center" style="width: 20rem;">
 						<div class="card-body text-white">
+							<h5 class="card-title" class="form-label">Viewing URL Stats</h5>
 							<?php
 								$app = new urlShortener();
 								$explode = parse_url($app->getCurrentURL());
 								$path = $explode["path"];
-								$id = substr($path, strpos($path, "/go/") + 4);
-								$url = $app->getUrl($id);
-								if(!$url){
-									echo "<h4>Invalid URL</h4><br><h5>Returning to main page</h5>";
-									header("Refresh: 3; URL=/");
-									return;
-								} elseif($url[1]){
-									$app->redirectToURL($id);
-									echo "<h5>Redirecting to:</h5><h5>$url[0]</h5><h5>in 5 seconds</h5>";
-									header("Refresh: 5; URL=$url[0]");
-								} else {
-									$app->redirectToURL($id);
-									header("Location: $url[0]");
-								}
+								$id = substr($path, strpos($path, "/go/") + 6);
+								echo '<p>id: ' . $id . '</p>';
 							?>
+							<a href="../" class="card-link" style="text-decoration: none; color: white;">Go back</a>
 						</div>
 					</div>
 				</div>
