@@ -1,4 +1,5 @@
 <?php
+	session_start();
 	require("locale.php");
 ?>
 
@@ -9,8 +10,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="icon" type="image/x-icon" href="favicon.ico">
-
-		<meta content="dekomori desu - url shortener" property="og:title" />
+		<meta content="Deko - URL Shortener" property="og:title" />
 		<meta content="https://deko.moe" property="og:url" />
 		<meta content="very cool and good site" property="og:description" />
 		<meta content="https://deko.moe/images/icon.png" property="og:image" />
@@ -18,14 +18,13 @@
 
 		<!-- Bootstrap CSS -->
 		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-
 		<link rel="stylesheet" href="../css/main.css">
 		<link rel="stylesheet" href="../css/sakura.css"/>
 		<script src="https://unpkg.com/vue@3"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 		<script src="../js/sakura.js"></script>
-		<title>dekomori desu - url shortener</title>
+		<title>Deko - URL Shortener</title>
 	</head>
 	<script type="module">
 		import LatestItems from '../js/latest.js'
@@ -38,7 +37,9 @@
 				return {
 					urlForm: {
 						urlInput: "",
-						safetyPage: false
+						customURLInput: "",
+						safetyPage: false,
+						customURL: false
 					},
 					searchQuery: '',
 					gridColumns: ['id', 'url', 'short', 'date'],
@@ -74,6 +75,8 @@
 						}).finally(() => {
 							this.urlForm.urlInput = ""
 							this.urlForm.safetyPage = false
+							this.urlForm.customURL = false
+							this.urlForm.customURLInput = ""
 						})
 				},
 				callURLS() {
@@ -111,18 +114,33 @@
 										<input type="checkbox" v-model="urlForm.safetyPage" class="form-check-input" name="safetyPage" id="safetyPage">
 										<label class="form-check-label" for="safetyPage"><?php echo $translator->translate('safetyPage'); ?></label>
 									</div>
+									<div class="mb-3 form-check">
+										<input type="checkbox" v-model="urlForm.customURL" class="form-check-input" name="customURL" id="customURL">
+										<label class="form-check-label" for="customURL"><?php echo $translator->translate('useCustomURL'); ?></label>
+									</div>
+									<div v-if="urlForm.customURL" class="mb-3">
+										<h5 class="card-title" for="customURLInput" class="form-label"><?php echo $translator->translate('customURL'); ?></h5>
+										<input type="text" v-model="urlForm.customURLInput" class="form-control" name="customURLInput" id="customURLInput" aria-describedby="urlHelp">
+										<div id="urlHelp" class="form-text text-white"><?php echo $translator->translate('maxCharacters'); ?></div>
+									</div>
 									<button type="submit" class="btn btn-primary"><?php echo $translator->translate('submit'); ?></button>
 									<br><br>
-									<p v-if="show">Short url:</p><p v-if="show">https://l.deko.moe/go/{{ urlCode }}</p>
+									<p v-if="show"><?php echo $translator->translate('shortURL'); ?></p><p v-if="show">https://l.deko.moe/go/{{ urlCode }}</p>
 									<p v-if="error" class="text-danger">{{ errorMessage }}</p>
-									<button type="button" @click="getURLS()" class="btn btnLatest" style="text-decoration: none; color: white;">Toggle latest</button><br>
-									<a href="https://deko.moe" class="card-link" style="text-decoration: none; color: white;">Main page</a>
+									<button type="button" @click="getURLS()" class="btn btnLatest" style="text-decoration: none; color: white;"><?php echo $translator->translate('toggleLatest'); ?></button><br>
+									<a href="https://l.deko.moe/login" class="card-link" style="text-decoration: none; color: white;"><?php echo $translator->translate('login'); ?></a><br>
+									<?php
+										if (isset($_SESSION["loggedin"])) {
+											echo $translator->translate('loggedInAs') . ' ' . $_SESSION["username"];
+										}
+									?>
+									<a href="https://deko.moe" class="card-link" style="text-decoration: none; color: white;"><?php echo $translator->translate('mainPage'); ?></a>
 								</form>
 							</div>
 						</div>
 						<div v-if="latestVisible" class="card text-center" style="width: 50rem;">
 							<div class="card-body text-white">
-								<h5 class="card-title">Your latest links</h5>
+								<h5 class="card-title"><?php echo $translator->translate('latestLinks'); ?></h5>
 								<latest-items
 									:data="gridData"
 									:columns="gridColumns"
@@ -137,9 +155,5 @@
 		<script src="https://kit.fontawesome.com/fd1445f088.js" crossorigin="anonymous"></script>
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
 	</body>
-	<script>
-		var sakura = new Sakura('body', {
-			fallSpeed: 1
-		});
-	</script>
+	<script src="../js/background.js"></script>
 </html>

@@ -1,4 +1,5 @@
 <?php
+	session_start();
 	require("urlShortener.php");
 	require("locale.php");
 	$app = new urlShortener();
@@ -7,16 +8,21 @@
 			$_POST = json_decode(file_get_contents("php://input"), true);
 			$url = $_POST["urlInput"];
 			$safe = $_POST["safetyPage"];
+			$customURL = $_POST["customURLInput"];
 		} else {
 			$url = $_POST["urlInput"];
 			$safe = $_POST["safetyPage"];
+			$customURL = $_POST["customURLInput"];
 		}
 		if($url == ""){
 			echo $app->generateResponse("error", $translator->translate('noURL'));
 			return;
 		}
+		if($customURL == ""){
+			$customURL = false;
+		}
 
-		$code = $app->addUrl($url, $safe);
+		$code = $app->addUrl($url, $safe, $customURL);
 		if($code && !is_array($code)){
 			echo $app->generateResponse("code", $code);
 		} elseif(is_array($code)){

@@ -1,6 +1,7 @@
 <?php
 	require dirname(__DIR__, 1) . '/vendor/autoload.php';
 	require("locale.php");
+
 	$dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__, 1));
 	$dotenv->load();
 
@@ -27,12 +28,17 @@
 			}
 		}
 
-		public function getAllURLSFromIP() {
+		public function getAllURLSFromIP($truncate = false) {
 			global $conn;
 			$urls = array();
 			$response = array();
+			$user = $this->getCurrentUser();
 
-			$sql = "SELECT * FROM url WHERE ip = '" . $conn->real_escape_string($this->getUserIP()) . "' ORDER BY id DESC LIMIT 5";
+			if ($user == '0') {
+				$sql = "SELECT * FROM url WHERE ip = '" . $conn->real_escape_string($this->getUserIP()) . "' AND user = '0' ORDER BY id DESC LIMIT 5";
+			} else {
+				$sql = "SELECT * FROM url WHERE user = '" . $user . "' ORDER BY id DESC LIMIT 5";
+			}
 			$result = $conn->query($sql);
 			if ($result->num_rows > 0) {
 				while($row = $result->fetch_assoc()) {
@@ -40,6 +46,10 @@
 					$url = $row["url"];
 					$short = $row["short"];
 					$date = $row["date"];
+					if($truncate){
+						$truncated = (strlen($url) > 50) ? substr($url, 0, 50) . '...' : $url;
+						$url = $truncated;
+					}
 					$responseArray = array("id" => $id, "url" => $url, "short" => $short, "date" => $date);
 					array_push($urls, $responseArray);
 				}
@@ -105,17 +115,34 @@
 			}
 		}
 
-		public function addUrl($url, $safe) {
+		public function redirectToURL($short) {
+			global $conn;
+
+			$ip = $this->getUserIP();
+			$userAgent = $_SERVER['HTTP_USER_AGENT'];
+
+			$stmt = $conn->prepare("INSERT INTO url_stats (short, ip, browser) VALUES (?, ?, ?)");
+			$stmt->bind_param("sss", $conn->real_escape_string($short), $conn->real_escape_string($ip), $userAgent);
+			$stmt->execute();
+			$stmt->close();
+			$conn->close();
+		}
+
+		public function addUrl($url, $safe, $customURL = false) {
 			global $conn;
 			global $translator;
 
 			$randomString = $this->generateShort();
 			$ip = $this->getUserIP();
+			$user = $this->getCurrentUser();
 
 			if($safe == "on") {
 				$safe = 1;
 			} else {
 				$safe = 0;
+			}
+			if($customURL != false){
+				$randomString = $customURL;
 			}
 
 			if(!filter_var($url, FILTER_VALIDATE_URL)){
@@ -126,12 +153,83 @@
 				return ["error", $translator->translate('pleaseWait')];
 			}
 
-			$stmt = $conn->prepare("INSERT INTO url (url, short, safe, ip) VALUES (?, ?, ?, ?)");
-			$stmt->bind_param("ssis", $conn->real_escape_string($url), $randomString, $conn->real_escape_string($safe), $conn->real_escape_string($ip));
+			if(strlen($randomString) > 8){
+				return ["error", $translator->translate('urlTooLong')];
+			}
+
+			$stmt = $conn->prepare("INSERT INTO url (url, short, safe, ip, user) VALUES (?, ?, ?, ?, ?)");
+			$stmt->bind_param("ssiss", $conn->real_escape_string($url), $conn->real_escape_string($randomString), $conn->real_escape_string($safe), $conn->real_escape_string($ip), $conn->real_escape_string($user));
 			$stmt->execute();
 			$stmt->close();
 			$conn->close();
 			return $randomString;
+		}
+
+		public function checkForAccount($uid) {
+			global $conn;
+			global $translator;
+
+			$sql = "SELECT * FROM users WHERE uid = '" . $conn->real_escape_string($uid) . "'";
+			$result = $conn->query($sql);
+			if ($result->num_rows > 0) {
+				while($row = $result->fetch_assoc()) {
+					$language = $row["language"];
+					$lastlogin = $row["lastlogin"];
+					$registration = $row["registration"];
+					$username = $row["username"];
+					return [$lastlogin, $language, $registration, $username];
+				}
+			} else {
+				return false;
+			}
+		}
+
+		public function getCurrentUser() {
+			global $conn;
+			global $translator;
+			$userID = $_SESSION["uid"];
+			if (!$_SESSION["loggedin"]) {
+				return '0';
+			} else {
+				return $userID;
+			}
+		}
+
+		public function createAccount($user) {
+			global $conn;
+			global $translator;
+
+			$ip = $this->getUserIP();
+			$uid = $user->id;
+			$username = $user->username;
+
+			$stmt = $conn->prepare("INSERT INTO users (uid, ip, username) VALUES (?, ?, ?)");
+			$stmt->bind_param("sss", $conn->real_escape_string($uid), $conn->real_escape_string($ip), $conn->real_escape_string($username));
+			$stmt->execute();
+			$stmt->close();
+			$conn->close();
+			$this->login($user);
+			return true;
+		}
+
+		public function login($user) {
+			global $conn;
+			global $translator;
+
+			if (!$this->checkForAccount($user->id)) {
+				$this->createAccount($user);
+			} else {
+				$returnedUser = $this->checkForAccount($user->id);
+				$lastlogin = $returnedUser[0];
+				$language = $returnedUser[1];
+				$registration = $returnedUser[2];
+				$username = $returnedUser[3];
+				$_SESSION["loggedin"] = true;
+				$_SESSION["uid"] = $user->id;
+				$_SESSION["username"] = $username;
+				$_SESSION["language"] = $language;
+				return true;
+			}
 		}
 	}
 ?>

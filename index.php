@@ -8,12 +8,31 @@
 		include("app/app.php");
 	});
 
+	$router->get('/login', function() {
+		include("app/login.php");
+	});
+
+	$router->get('/logout', function() {
+		session_start();
+		$_SESSION = array();
+		session_destroy();
+		include("app/logout.php");
+	});
+
 	$router->get('/go', function() {
+		header("Location: https://l.deko.moe");
+	});
+
+	$router->get('/view', function() {
 		header("Location: https://l.deko.moe");
 	});
 
 	$router->get('/go/{id}', function($id) {
 		include("app/redirect.php");
+	});
+
+	$router->get('/view/{id}', function($id) {
+		include("app/view.php");
 	});
 
 	$router->run();

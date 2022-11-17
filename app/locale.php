@@ -6,6 +6,11 @@
 
 	$translator = new Translator();
 	$translator->addTranslationFile("phpArray", $_ENV["APP_ROOT"] . "/app/lang/en_GB.php", "default", "en_GB");
-	Locale::setDefault("en_GB");
-	//$translator->setLocale("en_GB");
+	$translator->addTranslationFile("phpArray", $_ENV["APP_ROOT"] . "/app/lang/nb_NO.php", "default", "nb_NO");
+	if (isset($_SESSION["loggedin"])) {
+		$language = $_SESSION["language"];
+		Locale::setDefault($language);
+	} else {
+		Locale::setDefault("en_GB");
+	}
 ?>
