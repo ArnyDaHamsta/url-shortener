@@ -21,8 +21,15 @@
 		if($customURL == ""){
 			$customURL = false;
 		}
+		if(isset($_POST["apiKey"])){
+			$apiKey = $_POST["apiKey"];
+			$user = $app->getUserFromAPIKey($apiKey);
+		} else {
+			$user = "0";
+		}
 
-		$code = $app->addUrl($url, $safe, $customURL);
+
+		$code = $app->addUrl($url, $safe, $customURL, $user);
 		if($code && !is_array($code)){
 			echo $app->generateResponse("code", $code);
 		} elseif(is_array($code)){

@@ -1,11 +1,10 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 	session_start();
 	require("locale.php");
-	$provider = new \Wohali\OAuth2\Client\Provider\Discord([
-		'clientId'     => $_ENV["DISCORD_CLIENTID"],
-		'clientSecret' => $_ENV["DISCORD_CLIENTSECRET"],
-		'redirectUri'  => $_ENV["DISCORD_REDIRECTURI"],
-	]);
+	$app = new urlShortener();
 ?>
 
 <!doctype html>
@@ -37,11 +36,32 @@
 		Vue.createApp({
 			data() {
 				return {
-
+					apiKey: ''
 				}
 			},
+			mounted() {
+				axios.post("app/getUserAccount.php")
+					.then((res) => {
+						console.log(res)
+						if(res.data){
+							this.apiKey = res.data
+						}
+					})
+					.catch((error) => {
+					}).finally(() => {})
+			},
 			methods: {
-
+				updateAPIKey() {
+					axios.post("app/updateAPIKey.php")
+						.then((res) => {
+							console.log(res)
+							if(res.data){
+								this.apiKey = res.data
+							}
+						})
+						.catch((error) => {
+						}).finally(() => {})
+				}
 			}
 		}).mount('#app')
 	</script>
@@ -50,29 +70,23 @@
 			<div class="container">
 				<div class="d-flex justify-content-center align-items-center vh-100">
 					<div class="row">
-						<div class="card text-center" style="width: 20rem;">
+						<div class="card text-center" style="width: 40rem;">
 							<div class="card-body text-white">
-								<?php
-									if (!isset($_GET['code'])) {
-										if (!isset($_SESSION["loggedin"])) {
-											echo 'Redirecting to Discord login.<br>';
-                                            header("Refresh: 2; URL=" . $provider->getAuthorizationUrl());
-										} else {
-											echo $translator->translate('loggedInAs') . ' ' . $_SESSION["username"];
-											header("Refresh: 2; URL=https://l.deko.moe");
-											echo '<br><a href="https://l.deko.moe/logout" class="card-link" style="text-decoration: none; color: white;">' . $translator->translate('logout') . '</a><br>';
-										}
-									} elseif (isset($_GET['code'])) {
-										$token = $provider->getAccessToken('authorization_code', ['code' => $_GET['code']]);
-										$user = $provider->getResourceOwner($token);
-										$app = new urlShortener();
-										if ($app->login($user)) {
-											header("Location: https://l.deko.moe/account");
-										} else {
-											echo 'Failed to login';
-										}
-									}
-								?>
+								<h5 class="card-title" class="form-label">Account details for <?php echo $_SESSION["username"]; ?></h5><br>
+								<div class="form-group row">
+									<div class="col-sm-12">
+										<div class="input-group">
+											<input type="text" id="token" class="form-control privacy-blur" v-model="apiKey" readonly>
+											<div class="input-group-append">
+												<button class="btn btn-success btn-clipboard" type="button" data-clipboard-target="#token"><i class="fas fa-fw fa-copy"></i> Copy</button>
+												<button class="btn btn-primary refresh-token" data-id="1" type="button" @click="updateAPIKey()"><i class="fas fa-fw fa-sync"></i> Update</button>
+											</div>
+										</div>
+										<label class="form-check-label" for="token">API Token</label><br>
+										<br><a href="https://l.deko.moe/logout" class="card-link" style="text-decoration: none; color: white;"><?php echo $translator->translate('logout') ?></a><br>
+										<br><a href="https://l.deko.moe/" class="card-link" style="text-decoration: none; color: white;">Go back</a><br>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>

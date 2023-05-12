@@ -128,13 +128,72 @@
 			$conn->close();
 		}
 
-		public function addUrl($url, $safe, $customURL = false) {
+		public function getUserAPIKey($user) {
+			global $conn;
+
+			$sql = "SELECT uid, api FROM user_apikeys WHERE uid = '" . $conn->real_escape_string($user) . "'";
+			$result = $conn->query($sql);
+			if ($result->num_rows > 0) {
+				while($row = $result->fetch_assoc()) {
+					$apiKey = $row["api"];
+					return $apiKey;
+				}
+			} else {
+				return $this->addUserAPIKey($user);
+			}
+		}
+
+		public function getUserFromAPIKey($token) {
+			global $conn;
+
+			$sql = "SELECT uid, api FROM user_apikeys WHERE api = '" . $conn->real_escape_string($token) . "'";
+			$result = $conn->query($sql);
+			if ($result->num_rows > 0) {
+				while($row = $result->fetch_assoc()) {
+					$user = $row["uid"];
+					return $user;
+				}
+			} else {
+				return false;
+			}
+		}
+
+		public function addUserAPIKey($user) {
+			global $conn;
+			global $translator;
+
+			$randomString = "token_" . $this->generateShort(24);
+
+			$stmt = $conn->prepare("INSERT INTO user_apikeys (uid, api) VALUES (?, ?)");
+			$stmt->bind_param("ss", $user, $randomString);
+			$stmt->execute();
+			$stmt->close();
+			$conn->close();
+			return $randomString;
+		}
+
+		public function updateUserAPIKey($user) {
+			global $conn;
+			global $translator;
+
+			$randomString = "token_" . $this->generateShort(24);
+
+			$sql = "UPDATE user_apikeys SET api = '$randomString' WHERE uid = '$user'";
+			$result = $conn->query($sql);
+			return $randomString;
+		}
+
+		public function addUrl($url, $safe, $customURL = false, $userGiven) {
 			global $conn;
 			global $translator;
 
 			$randomString = $this->generateShort();
 			$ip = $this->getUserIP();
-			$user = $this->getCurrentUser();
+			if($userGiven == "0"){
+				$user = $this->getCurrentUser();
+			} else {
+				$user = $userGiven;
+			}
 
 			if($safe == "on") {
 				$safe = 1;
@@ -195,13 +254,30 @@
 			}
 		}
 
-		public function createAccount($user) {
+		public function checkOnline($url) {
+			$headers = @get_headers($url);
+			
+			if ($headers && strpos($headers[0], '200') !== false) {
+				return true;
+			} else {
+				return false;
+			}
+		 }
+
+		public function createAccount($user, $keycloak = false) {
 			global $conn;
 			global $translator;
+			$uid = null;
+			$username = null;
+			if($keycloak){
+				$uid = $user->getEmail();
+				$username = $user->getName();
+			} else {
+				$uid = $user->getId();
+				$username = $user->getUsername();
+			}
 
 			$ip = $this->getUserIP();
-			$uid = $user->id;
-			$username = $user->username;
 
 			$stmt = $conn->prepare("INSERT INTO users (uid, ip, username) VALUES (?, ?, ?)");
 			$stmt->bind_param("sss", $conn->real_escape_string($uid), $conn->real_escape_string($ip), $conn->real_escape_string($username));
@@ -212,20 +288,26 @@
 			return true;
 		}
 
-		public function login($user) {
+		public function login($user, $keycloak = false) {
 			global $conn;
 			global $translator;
-
-			if (!$this->checkForAccount($user->id)) {
-				$this->createAccount($user);
+			$check = null;
+			if($keycloak){
+				$check = $user->getEmail();
 			} else {
-				$returnedUser = $this->checkForAccount($user->id);
+				$check = $user->getId();
+			}
+
+			if (!$this->checkForAccount($check)) {
+				$this->createAccount($user, true);
+			} else {
+				$returnedUser = $this->checkForAccount($check);
 				$lastlogin = $returnedUser[0];
 				$language = $returnedUser[1];
 				$registration = $returnedUser[2];
 				$username = $returnedUser[3];
 				$_SESSION["loggedin"] = true;
-				$_SESSION["uid"] = $user->id;
+				$_SESSION["uid"] = $check;
 				$_SESSION["username"] = $username;
 				$_SESSION["language"] = $language;
 				return true;

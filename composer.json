@@ -7,6 +7,7 @@
         "laminas/laminas-servicemanager": "^3.7",
         "php": "^7.3",
         "ext-intl": "*",
-        "team-reflex/oauth2-discord": "^1.0"
+        "stevenmaguire/oauth2-keycloak": "^4.0",
+        "wohali/oauth2-discord-new": "^1.2"
     }
 }

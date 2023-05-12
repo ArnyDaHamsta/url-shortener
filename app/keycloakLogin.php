@@ -1,11 +1,15 @@
 <?php
 	session_start();
 	require("locale.php");
-	$provider = new \Wohali\OAuth2\Client\Provider\Discord([
-		'clientId'     => $_ENV["DISCORD_CLIENTID"],
-		'clientSecret' => $_ENV["DISCORD_CLIENTSECRET"],
-		'redirectUri'  => $_ENV["DISCORD_REDIRECTURI"],
-	]);
+    $provider = new Stevenmaguire\OAuth2\Client\Provider\Keycloak([
+        'authServerUrl'         => $_ENV["KEYCLOAK_AUTHSERVERURL"],
+        'realm'                 => $_ENV["KEYCLOAK_REALM"],
+        'clientId'              => $_ENV["KEYCLOAK_CLIENTID"],
+        'clientSecret'          => $_ENV["KEYCLOAK_CLIENTSECRET"],
+        'redirectUri'           => $_ENV["KEYCLOAK_REDIRECTURI"],
+        'version' => '21.0.2', # Add this parameter to troubleshoot the issue
+    ]);
+	
 ?>
 
 <!doctype html>
@@ -55,8 +59,13 @@
 								<?php
 									if (!isset($_GET['code'])) {
 										if (!isset($_SESSION["loggedin"])) {
-											echo 'Redirecting to Discord login.<br>';
-                                            header("Refresh: 2; URL=" . $provider->getAuthorizationUrl());
+											echo 'Redirecting to Keycloak login.<br>';
+											$app = new urlShortener();
+											if($app->checkOnline("http://10.0.1.1:8180")){
+												header("Refresh: 2; URL=" . $provider->getAuthorizationUrl());
+											} else {
+												echo '<br>Keycloak server is not online.';
+											}
 										} else {
 											echo $translator->translate('loggedInAs') . ' ' . $_SESSION["username"];
 											header("Refresh: 2; URL=https://l.deko.moe");
@@ -65,8 +74,9 @@
 									} elseif (isset($_GET['code'])) {
 										$token = $provider->getAccessToken('authorization_code', ['code' => $_GET['code']]);
 										$user = $provider->getResourceOwner($token);
+                                        //var_dump($user);
 										$app = new urlShortener();
-										if ($app->login($user)) {
+										if ($app->login($user, true)) {
 											header("Location: https://l.deko.moe/account");
 										} else {
 											echo 'Failed to login';

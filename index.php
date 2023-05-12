@@ -12,6 +12,14 @@
 		include("app/login.php");
 	});
 
+	$router->get('/keycloak', function() {
+		include("app/keycloakLogin.php");
+	});
+
+	$router->get('/account', function() {
+		include("app/account.php");
+	});
+
 	$router->get('/logout', function() {
 		session_start();
 		$_SESSION = array();

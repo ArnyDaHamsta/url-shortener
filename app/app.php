@@ -128,10 +128,12 @@
 									<p v-if="show"><?php echo $translator->translate('shortURL'); ?></p><p v-if="show">https://l.deko.moe/go/{{ urlCode }}</p>
 									<p v-if="error" class="text-danger">{{ errorMessage }}</p>
 									<button type="button" @click="getURLS()" class="btn btnLatest" style="text-decoration: none; color: white;"><?php echo $translator->translate('toggleLatest'); ?></button><br>
-									<a href="https://l.deko.moe/login" class="card-link" style="text-decoration: none; color: white;"><?php echo $translator->translate('login'); ?></a><br>
 									<?php
 										if (isset($_SESSION["loggedin"])) {
-											echo $translator->translate('loggedInAs') . ' ' . $_SESSION["username"];
+											echo '<a href="./account" class="card-link" style="text-decoration: none; color: white;">' . $translator->translate('loggedInAs') . ' ' . $_SESSION["username"] . '</a>';
+										} else {
+											echo '<a href="./login" class="card-link" style="text-decoration: none; color: white;">' . $translator->translate('login') . '</a><br>';
+											echo '<a href="./keycloak" class="card-link" style="text-decoration: none; color: white;">Login with Keycloak</a><br>';
 										}
 									?>
 									<a href="https://deko.moe" class="card-link" style="text-decoration: none; color: white;"><?php echo $translator->translate('mainPage'); ?></a>
